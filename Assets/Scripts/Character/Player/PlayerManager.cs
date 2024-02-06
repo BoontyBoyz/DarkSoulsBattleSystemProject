@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class PlayerManager : CharacterManager
 {
-
+    [HideInInspector] public PlayerAnimatorManager playerAnimatorManager;
     PlayerLocomotionManager playerLocomotionManager;
 
     protected override void Awake()
@@ -12,7 +12,7 @@ public class PlayerManager : CharacterManager
         base.Awake();
 
         // DO MORE STUFF, ONLY FOR THE PLAYER
-
+        playerAnimatorManager = GetComponent<PlayerAnimatorManager>();
         playerLocomotionManager = GetComponent<PlayerLocomotionManager>();
     }
 
@@ -27,7 +27,34 @@ public class PlayerManager : CharacterManager
     {
         base.Update();
 
+        //MAKES IT SO THAT ONLY YOU CAN CONTROL ONE PLAYER AT A TIME
+        if (!IsOwner)
+            return;
+        
+
         // HANDLE ALL OF OUR CHARACTERS MOVEMENT
         playerLocomotionManager.HandleAllMovement();
+    }
+
+    protected override void LateUpdate()
+    {
+        if (!IsOwner)
+            return;
+
+        base.LateUpdate();
+
+        PlayerCamera.instance.HandleAllCameraActions();
+    }
+
+    public override void OnNetworkSpawn()
+    {
+        base.OnNetworkSpawn();
+
+        // IF THIS IS THE PLAYER OBJECT OWNED BY THIS CLIENT
+        if (IsOwner)
+        {
+            PlayerCamera.instance.player = this;
+            PlayerInputManager.instance.player = this;
+        }
     }
 }
