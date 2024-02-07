@@ -7,15 +7,19 @@ public class PlayerLocomotionManager : CharacterLocomotionManager
     // THESE VALUES ARE TAKEN FROM THE INPUT MANAGER
     PlayerManager player;
 
-    public float verticalMovement;
-    public float horizontalMovement;
-    public float moveAmount;
+    [HideInInspector] public float verticalMovement;
+    [HideInInspector] public float horizontalMovement;
+    [HideInInspector] public float moveAmount;
 
+    [Header("Movement Settings")]
     private Vector3 moveDirection;
     private Vector3 targetRotationDirection;
     [SerializeField] float walkingSpeed = 2;
     [SerializeField] float runningSpeed = 5;
     [SerializeField] float rotationSpeed = 15f;
+
+    [Header("Dodge")]
+    private Vector3 rollDirection;
 
 
     protected override void Awake()
@@ -57,7 +61,6 @@ public class PlayerLocomotionManager : CharacterLocomotionManager
 
     public void HandleAllMovement()
     {
-        //GROUNDED MOVEMENT
         HandleGroundedMovement();
         HandleRotation();
         //AERIAL MOVEMENT
@@ -74,6 +77,10 @@ public class PlayerLocomotionManager : CharacterLocomotionManager
 
     private void HandleGroundedMovement()
     {
+        // IF THE PLAYER CANNOT MOVE, DO NOT RUN ANY OF THIS LOGIC
+        if (!player.canMove)
+            return;
+
         GetMovementValues();
 
         // OUR MOVEMENT DIRECTION IS BASED ON OUR CAMERAS FACING PERSPECTIVE & OUR MOVEMENT INPUTS
@@ -96,6 +103,10 @@ public class PlayerLocomotionManager : CharacterLocomotionManager
 
     private void HandleRotation()
     {
+        // IF YOU CANNOT ROTATE, DO NOT RUN ANY OF THIS LOGIC
+        if (!player.canRotate)
+            return;
+
         targetRotationDirection = Vector3.zero;
         targetRotationDirection = PlayerCamera.instance.cameraObject.transform.forward * verticalMovement;
         targetRotationDirection = targetRotationDirection + PlayerCamera.instance.cameraObject.transform.right * horizontalMovement;
@@ -110,5 +121,30 @@ public class PlayerLocomotionManager : CharacterLocomotionManager
         Quaternion newRotation = Quaternion.LookRotation(targetRotationDirection);
         Quaternion targetRotation = Quaternion.Slerp(transform.rotation, newRotation, rotationSpeed * Time.deltaTime);
         transform.rotation = targetRotation;
+    }
+
+    public void AttemptToPerformDodge()
+    {
+        if (player.isPerformingAction)
+            return;
+
+        // IF WE ARE MOVING WHEN WE ATTEMPT TO DODGE, WE PERFORM A ROLL
+        if (PlayerInputManager.instance.moveAmount > 0)
+        {
+            rollDirection = PlayerCamera.instance.cameraObject.transform.forward * PlayerInputManager.instance.verticalInput;
+            rollDirection += PlayerCamera.instance.cameraObject.transform.right * PlayerInputManager.instance.horizontalInput;
+            rollDirection.y = 0;
+            rollDirection.Normalize();
+
+            Quaternion playerRotation = Quaternion.LookRotation(rollDirection);
+            player.transform.rotation = playerRotation;
+
+            player.playerAnimatorManager.PlayTargetActionAnimation("Roll_Forward_01", true, true);
+        }
+        // IF WE ARE STATIONARY , WE PERFORM A BACKSTEP
+        else
+        {
+            // PERFORM A BACKSTEP ANIMATION
+        }
     }
 }
