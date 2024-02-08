@@ -14,8 +14,9 @@ public class PlayerLocomotionManager : CharacterLocomotionManager
     [Header("Movement Settings")]
     private Vector3 moveDirection;
     private Vector3 targetRotationDirection;
-    [SerializeField] float walkingSpeed = 2;
-    [SerializeField] float runningSpeed = 5;
+    [SerializeField] float walkingSpeed = 2f;
+    [SerializeField] float runningSpeed = 5f;
+    [SerializeField] float sprintingSpeed;
     [SerializeField] float rotationSpeed = 15f;
 
     [Header("Dodge")]
@@ -32,7 +33,7 @@ public class PlayerLocomotionManager : CharacterLocomotionManager
     // Start is called before the first frame update
     void Start()
     {
-        
+        sprintingSpeed = 7f;   
     }
 
     // Update is called once per frame
@@ -53,7 +54,7 @@ public class PlayerLocomotionManager : CharacterLocomotionManager
             moveAmount = player.characterNetworkManager.moveAmount.Value;
 
             // IF NOT LOCKED ON, PASS MOVE AMOUNT
-            player.playerAnimatorManager.UpdateAnimatorMovementParameters(0, moveAmount);
+            player.playerAnimatorManager.UpdateAnimatorMovementParameters(0, moveAmount, player.playerNetworkManager.isSprinting.Value);
 
             //IF LOCKED ON, PASS HORZ AND VERT
         }
@@ -89,15 +90,22 @@ public class PlayerLocomotionManager : CharacterLocomotionManager
         moveDirection.Normalize();
         moveDirection.y = 0;
 
-        if (PlayerInputManager.instance.moveAmount > 0.5f)
+        if (player.playerNetworkManager.isSprinting.Value)
         {
-            // MOVE AT A RUNNING SPEED
-            player.characterController.Move(moveDirection * runningSpeed * Time.deltaTime);
+            player.characterController.Move(moveDirection * sprintingSpeed * Time.deltaTime);
         }
-        else if (PlayerInputManager.instance.moveAmount <= 0.5f)
+        else
         {
-            // MOVE AT A WALKING SPEED
-            player.characterController.Move(moveDirection * walkingSpeed * Time.deltaTime);
+            if (PlayerInputManager.instance.moveAmount > 0.5f)
+            {
+                // MOVE AT A RUNNING SPEED
+                player.characterController.Move(moveDirection * runningSpeed * Time.deltaTime);
+            }
+            else if (PlayerInputManager.instance.moveAmount <= 0.5f)
+            {
+                // MOVE AT A WALKING SPEED
+                player.characterController.Move(moveDirection * walkingSpeed * Time.deltaTime);
+            }
         }
     }
 
@@ -121,6 +129,27 @@ public class PlayerLocomotionManager : CharacterLocomotionManager
         Quaternion newRotation = Quaternion.LookRotation(targetRotationDirection);
         Quaternion targetRotation = Quaternion.Slerp(transform.rotation, newRotation, rotationSpeed * Time.deltaTime);
         transform.rotation = targetRotation;
+    }
+
+    public void HandleSprinting()
+    {
+        if (player.isPerformingAction)
+        {
+            player.playerNetworkManager.isSprinting.Value = false;
+        }
+
+        // IF WE ARE OUT OF STAMINA, SET SPRINTING TO FALSE
+
+        // IF WE ARE MOVING, SPRINTING IS TRUE
+        if (moveAmount >= 0.5)
+        {
+            player.playerNetworkManager.isSprinting.Value = true;
+        }
+        // IF WE ARE STATIONARY/MOVING SLOWLY SPRINTING IS FALSE
+        else
+        {
+            player.playerNetworkManager.isSprinting.Value = false;
+        }
     }
 
     public void AttemptToPerformDodge()
