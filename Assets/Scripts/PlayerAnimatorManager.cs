@@ -4,6 +4,15 @@ using UnityEngine;
 
 public class PlayerAnimatorManager : CharacterAnimatorManager
 {
+    PlayerManager player;
+
+    protected override void Awake()
+    {
+        base.Awake();
+
+        player = GetComponent<PlayerManager>();
+    }
+
     // Start is called before the first frame update
     void Start()
     {
@@ -14,6 +23,16 @@ public class PlayerAnimatorManager : CharacterAnimatorManager
     void Update()
     {
         
+    }
+
+    private void OnAnimatorMove()
+    {
+        if (player.applyRootMotion)
+        {
+            Vector3 velocity = player.animator.deltaPosition;
+            player.characterController.Move(velocity);
+            player.transform.rotation *= player.animator.deltaRotation; 
+        }
     }
 
     //public void UpdateAnimatorMovementParameters(float horizontalValue, float verticalValue)

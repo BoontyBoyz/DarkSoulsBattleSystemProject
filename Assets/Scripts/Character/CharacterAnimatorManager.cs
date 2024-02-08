@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Unity.Netcode;
 
 public class CharacterAnimatorManager : MonoBehaviour
 {
@@ -42,7 +43,7 @@ public class CharacterAnimatorManager : MonoBehaviour
         bool canMove = false)
     {
         // applying root motion uses the motion in the animation (keep note of this in case of future problems)
-        character.animator.applyRootMotion = applyRootMotion;
+        character.applyRootMotion = applyRootMotion;
         character.animator.CrossFade(targetAnimation, 0.2f);
 
         // CAN BE USED TO STOP CHARACTER FROM ATTEMPTING NEW ACTIONS (EG, ADDING SOME KIND OF TIMER TO DODGE ROLL WILL MAKE IT CANCEL LIKE MH)
@@ -52,5 +53,8 @@ public class CharacterAnimatorManager : MonoBehaviour
         character.isPerformingAction = isPerformingAction;
         character.canRotate = canRotate;
         character.canMove = canMove;
+
+        // TELL THE SERVER/HOST WE PLAYED AN ANIMATION, AND TO PLAY THAT ANIMATION FOR EVERYBODY ELSE PRESENT
+        character.characterNetworkManager.NotifyTheServerOfActionAnimationServerRpc(NetworkManager.Singleton.LocalClientId, targetAnimation, applyRootMotion);
     }
 }

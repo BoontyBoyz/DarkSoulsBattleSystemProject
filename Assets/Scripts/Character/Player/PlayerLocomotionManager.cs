@@ -144,7 +144,7 @@ public class PlayerLocomotionManager : CharacterLocomotionManager
         // IF WE ARE STATIONARY , WE PERFORM A BACKSTEP
         else
         {
-            // PERFORM A BACKSTEP ANIMATION
+            player.playerAnimatorManager.PlayTargetActionAnimation("Back_Step_01", true, true);
         }
     }
 }
