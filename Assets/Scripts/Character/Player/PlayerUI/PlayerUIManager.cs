@@ -10,6 +10,8 @@ public class PlayerUIManager : MonoBehaviour
     [Header("NETWORK JOIN")]
     [SerializeField] bool startGameAsClient;
 
+    [SerializeField] public PlayerUIHudManager playerUIHudManager;
+
 
     private void Awake()
     {
@@ -21,6 +23,8 @@ public class PlayerUIManager : MonoBehaviour
         {
             Destroy(gameObject);
         }
+
+        playerUIHudManager = GetComponentInChildren<PlayerUIHudManager>();
     }
 
     // Start is called before the first frame update
